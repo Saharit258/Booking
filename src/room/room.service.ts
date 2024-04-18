@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,11 +14,22 @@ export class RoomService {
 
   async updateTime(body: UpdateRoomDto) {
     try {
-      if (body.openTime > body.closeTime) {
+      const parseTimeToMinutesRoom = (timeString: string) => {
+        const [hours, minutes, seconds = 0] = timeString.split(':').map(Number);
+        if (seconds !== 0) {
+          throw new BadRequestException('ห้ามใส่วินาที');
+        }
+        return hours * 60 + minutes;
+      };
+
+      const openTimeMinutes = parseTimeToMinutesRoom(body.openTime);
+      const closeTimeMinutes = parseTimeToMinutesRoom(body.closeTime);
+
+      if (openTimeMinutes > closeTimeMinutes) {
         throw new Error('เวลาเปิด กับ เวลาปิด ไม่อยู่ในรูปแบบที่ต้องการ');
       }
 
-      if (body.openTime == body.closeTime) {
+      if (openTimeMinutes == closeTimeMinutes) {
         throw new Error('เวลาเปิด กับ เวลาปิด ไม่อยู่ในรูปแบบที่ต้องการ');
       }
 
