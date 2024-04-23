@@ -16,7 +16,7 @@ export class BookingService {
     private roomRepository: Repository<Room>,
   ) {}
 
-  async bookingMeetingRoom(body: CreateBookingDto) {
+  async bookingMeetingRoom(body: CreateBookingDto): Promise<Booking> {
     try {
       const thaiTime = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
       console.log(
@@ -45,7 +45,7 @@ export class BookingService {
       const parseTimeToMinutes = (timeString: string) => {
         const [hours, minutes, seconds = 0] = timeString.split(':').map(Number);
         if (minutes !== 0) {
-          throw new BadRequestException('เวลาที่กำหนดต้องเป็น 1 ชม');
+          throw new BadRequestException('ตรวจสอบเวลาที่เลือก ตัวอย่าง 12:00');
         } else if (seconds !== 0) {
           throw new BadRequestException('ห้ามใส่วินาที');
         }
@@ -145,7 +145,7 @@ export class BookingService {
     }
   }
 
-  async getBooking() {
+  async getBooking(): Promise<Booking[]> {
     const data = await this.bookingRepository.find({
       where: { isDalete: false },
       order: { bookingDate: 'ASC', startTime: 'ASC' },
@@ -153,12 +153,13 @@ export class BookingService {
     return data;
   }
 
-  async cancelBooking(body: CreateBookingDto) {
+  async cancelBooking(body: CreateBookingDto): Promise<boolean> {
     try {
-      const { bookingDate, startTime, endTime } = body;
+      const { name, bookingDate, startTime, endTime } = body;
 
       const bookingToCancel = await this.bookingRepository.findOne({
         where: {
+          name,
           bookingDate,
           startTime,
           endTime,

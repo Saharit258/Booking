@@ -15,7 +15,7 @@ export class RoomService {
     private bookingRepository: Repository<Booking>,
   ) {}
 
-  async updateTime(body: UpdateRoomDto) {
+  async updateTime(body: UpdateRoomDto): Promise<Room> {
     try {
       const parseTimeToMinutesRoom = (timeString: string) => {
         const [hours, minutes, seconds = 0] = timeString.split(':').map(Number);
@@ -72,7 +72,7 @@ export class RoomService {
     }
   }
 
-  async getRoom() {
+  async getRoom(): Promise<Room[]> {
     [];
     const data = await this.roomRepository.find();
     return data;
