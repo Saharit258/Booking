@@ -19,3 +19,10 @@ export class CreateBookingDto {
   @IsNotEmpty()
   endTime: string;
 }
+
+export class RemoveCreateBookingDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}

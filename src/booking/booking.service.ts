@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { RemoveCreateBookingDto } from './dto/create-booking.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from '../entities/booking.entity';
@@ -17,13 +18,18 @@ export class BookingService {
 
   async bookingMeetingRoom(body: CreateBookingDto) {
     try {
-      const today = new Date();
+      const thaiTime = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+      console.log(
+        '🚀 ~ BookingService ~ bookingMeetingRoom ~ thaiTime:',
+        thaiTime,
+      );
+
       const bookingDate = new Date(body.bookingDate);
 
       const todayWithoutTime = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
+        thaiTime.getFullYear(),
+        thaiTime.getMonth(),
+        thaiTime.getDate(),
       );
 
       const bookingDateWithoutTime = new Date(
@@ -37,9 +43,7 @@ export class BookingService {
       }
 
       const parseTimeToMinutes = (timeString: string) => {
-        const [hours, minutes = 0, seconds = 0] = timeString
-          .split(':')
-          .map(Number);
+        const [hours, minutes, seconds = 0] = timeString.split(':').map(Number);
         if (minutes !== 0) {
           throw new BadRequestException('เวลาที่กำหนดต้องเป็น 1 ชม');
         } else if (seconds !== 0) {
@@ -70,10 +74,26 @@ export class BookingService {
         );
       }
 
+      const checkNameBooking = await this.bookingRepository.findOne({
+        where: {
+          name: body.name,
+          bookingDate: body.bookingDate,
+          room: { id: 1 },
+          isDalete: false,
+        },
+      });
+
+      if (checkNameBooking) {
+        throw new BadRequestException(
+          'ไม่สามารถจองได้ เนื่องจากมีการจองอื่นในวันเดียวกันแล้ว',
+        );
+      }
+
       const existingBookings = await this.bookingRepository.find({
         where: {
           bookingDate: body.bookingDate,
           room: { id: 1 },
+          isDalete: false,
         },
       });
 
@@ -91,7 +111,8 @@ export class BookingService {
         );
       }
 
-      const currentTimeMinutes = today.getHours() * 60 + today.getMinutes();
+      const currentTimeMinutes =
+        thaiTime.getHours() * 60 + thaiTime.getMinutes();
       if (
         bookingDateWithoutTime.getTime() === todayWithoutTime.getTime() &&
         startTimeMinutes <= currentTimeMinutes
@@ -118,6 +139,40 @@ export class BookingService {
         return data;
       } else {
         throw new BadRequestException('ไม่สามารถจองได้');
+      }
+    } catch (error) {
+      throw new Error(`${error.message}`);
+    }
+  }
+
+  async getBooking() {
+    const data = await this.bookingRepository.find({
+      where: { isDalete: false },
+      order: { bookingDate: 'ASC', startTime: 'ASC' },
+    });
+    return data;
+  }
+
+  async cancelBooking(body: CreateBookingDto) {
+    try {
+      const { bookingDate, startTime, endTime } = body;
+
+      const bookingToCancel = await this.bookingRepository.findOne({
+        where: {
+          bookingDate,
+          startTime,
+          endTime,
+          room: { id: 1 },
+          isDalete: false,
+        },
+      });
+
+      if (bookingToCancel) {
+        bookingToCancel.isDalete = true;
+        await this.bookingRepository.save(bookingToCancel);
+        return true;
+      } else {
+        throw new BadRequestException('ไม่พบการจองที่ต้องการยกเลิก');
       }
     } catch (error) {
       throw new Error(`${error.message}`);

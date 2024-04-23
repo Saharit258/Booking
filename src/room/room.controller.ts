@@ -19,7 +19,13 @@ import { ApiTags } from '@nestjs/swagger';
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
-  @Put()
+  @Get()
+  async getRoom() {
+    const data = await this.roomService.getRoom();
+    return { data };
+  }
+
+  @Put('/update-time')
   async updateTime(@Body() body: UpdateRoomDto) {
     try {
       const data = await this.roomService.updateTime(body);

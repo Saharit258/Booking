@@ -18,6 +18,14 @@ export class Booking {
   @Column({ name: 'end_time', nullable: true, type: 'time' })
   endTime: string;
 
+  @Column({
+    name: 'is_dalete',
+    nullable: true,
+    type: 'boolean',
+    default: false,
+  })
+  isDalete: boolean;
+
   @ManyToOne(() => Room, (room) => room.booking)
   room: Room;
 }

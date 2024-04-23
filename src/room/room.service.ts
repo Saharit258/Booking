@@ -4,12 +4,15 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from '../entities/room.entity';
 import { Repository } from 'typeorm';
+import { Booking } from '../entities/booking.entity';
 
 @Injectable()
 export class RoomService {
   constructor(
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
+    @InjectRepository(Booking)
+    private bookingRepository: Repository<Booking>,
   ) {}
 
   async updateTime(body: UpdateRoomDto) {
@@ -42,9 +45,36 @@ export class RoomService {
         where: { id: 1 },
       });
 
+      const removeBookings = await this.bookingRepository.find({
+        where: { room: { id: 1 } },
+      });
+
+      for (const booking of removeBookings) {
+        const startTimeMinutes = parseTimeToMinutesRoom(booking.startTime);
+        const endTimeMinutes = parseTimeToMinutesRoom(booking.endTime);
+
+        if (startTimeMinutes > openTimeMinutes) {
+          await this.bookingRepository.update(
+            { id: booking.id },
+            { isDalete: true },
+          );
+        } else if (closeTimeMinutes < endTimeMinutes) {
+          await this.bookingRepository.update(
+            { id: booking.id },
+            { isDalete: true },
+          );
+        }
+      }
+
       return updatedTime;
     } catch (error) {
       throw new Error(`${error.message}`);
     }
+  }
+
+  async getRoom() {
+    [];
+    const data = await this.roomRepository.find();
+    return data;
   }
 }

@@ -13,7 +13,7 @@ import { BookingModule } from './booking/booking.module';
       port: 5432,
       username: 'postgres',
       password: '123456',
-      database: 'booking',
+      database: 'newbooking',
       entities: [Booking, Room],
       synchronize: true,
     }),

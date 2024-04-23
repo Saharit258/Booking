@@ -21,8 +21,24 @@ export class BookingController {
   @Post()
   async bookingMeetingRoom(@Body() body: CreateBookingDto) {
     try {
-      await this.bookingService.bookingMeetingRoom(body);
-      return 'จองสำเร็จ';
+      const data = await this.bookingService.bookingMeetingRoom(body);
+      return { data };
+    } catch (error) {
+      throw new BadRequestException(`${error.message}`);
+    }
+  }
+
+  @Get()
+  async getBooking() {
+    const data = await this.bookingService.getBooking();
+    return { data };
+  }
+
+  @Delete('cancel')
+  async cancelBooking(@Body() body: CreateBookingDto) {
+    try {
+      await this.bookingService.cancelBooking(body);
+      return { data: {} };
     } catch (error) {
       throw new BadRequestException(`${error.message}`);
     }
